@@ -1,6 +1,5 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtCore import pyqtSlot
 from model.Table import Table
 import sys
 import logging
@@ -48,7 +47,6 @@ class MainWindow(QWidget):
 
         self.show()
 
-    @pyqtSlot()
     def open_button_clicked(self):
         logging.info("open_button clicked")
         options = QFileDialog.Options()
@@ -58,7 +56,6 @@ class MainWindow(QWidget):
         if filename:
             self.table.load_from_file(filename)
 
-    @pyqtSlot()
     def save_button_clicked(self):
         logging.info("save_button clicked")
         options = QFileDialog.Options()
