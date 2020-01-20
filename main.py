@@ -1,14 +1,17 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtCore import pyqtSlot
-from model.hexTable import HexTable
+from model.Table import Table
 import sys
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.hex_table = HexTable()
+        self.table = Table()
         self.init_ui()
 
     def init_ui(self):
@@ -18,7 +21,7 @@ class MainWindow(QWidget):
         grid_layout = QGridLayout()
         self.setLayout(grid_layout)
 
-        grid_layout.addWidget(self.hex_table, 0, 0, 3, 4)
+        grid_layout.addWidget(self.table, 0, 0, 3, 4)
 
         sum_label = QLabel("Контрольная сумма")
         sum_label.setFixedHeight(35)
@@ -47,6 +50,7 @@ class MainWindow(QWidget):
 
     @pyqtSlot()
     def open_button_clicked(self):
+        logging.info("open_button clicked")
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         filename, _ = QFileDialog.getOpenFileName(
@@ -56,6 +60,7 @@ class MainWindow(QWidget):
 
     @pyqtSlot()
     def save_button_clicked(self):
+        logging.info("save_button clicked")
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         filename, _ = QFileDialog.getSaveFileName(

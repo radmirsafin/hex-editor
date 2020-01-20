@@ -1,8 +1,10 @@
 from PyQt5.QtWidgets import QTableWidget
 from PyQt5.QtCore import Qt
+from model.HEXParser import HEXParser
+import logging
 
 
-class HexTable(QTableWidget):
+class Table(QTableWidget):
 
     COLUMNS_COUNT = 5
     ROWS_COUNT = 16
@@ -14,6 +16,7 @@ class HexTable(QTableWidget):
     def __init__(self):
         QTableWidget.__init__(self)
 
+        self.hex_parser = HEXParser()
         self.setColumnCount(self.COLUMNS_COUNT)
         self.setRowCount(self.ROWS_COUNT)
 
@@ -29,7 +32,8 @@ class HexTable(QTableWidget):
         self.resizeColumnsToContents()
 
     def load_from_file(self, filename):
-        pass
+        logging.info(f"Load HEX table from file {filename}")
+        self.hex_parser.parse_from_file(filename)
 
     def save_to_file(self, filename):
-        pass
+        logging.info(f"Save HEX table to file {filename}")
