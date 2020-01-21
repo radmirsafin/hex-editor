@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.DEBUG)
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.check_sum_edit = None
         self.table = Table()
         self.init_ui()
 
@@ -27,9 +28,9 @@ class MainWindow(QWidget):
         sum_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
         grid_layout.addWidget(sum_label, 4, 1)
 
-        sum_edit = QLineEdit()
-        sum_edit.setFixedWidth(150)
-        grid_layout.addWidget(sum_edit, 4, 2)
+        self.check_sum_edit = QLineEdit()
+        self.check_sum_edit.setFixedWidth(150)
+        grid_layout.addWidget(self.check_sum_edit, 4, 2)
 
         calc_button = QPushButton("Рассчитать")
         calc_button.setFixedWidth(150)
@@ -55,6 +56,7 @@ class MainWindow(QWidget):
             self, "Открыть файл", "", "Hex dump (*.hex);;All Files (*)", options=options)
         if filename:
             self.table.load_from_file(filename)
+            self.check_sum_edit.setText(self.table.hex_binding.get_check_sum())
 
     def save_button_clicked(self):
         logging.info("save_button clicked")
