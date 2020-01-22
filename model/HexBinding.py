@@ -30,67 +30,58 @@ class RecordType(Enum):
 
 
 class HexBinding:
-    STRING_MODE = True
-
-    def __init__(self):
-        self.hex = None
+    def __init__(self, filename):
+        self.hex = IntelHex(filename)
 
     @classmethod
     def bytes_to_string(cls, hex_bytes):
         raw_data = []
         for b in hex_bytes.todict().values():
             raw_data += hex(b).replace("0x", "").rjust(2, '0')
-        return "".join(raw_data)
+        return "".join(raw_data).upper()
 
-    def load_from_file(self, filename):
-        self.hex = IntelHex(filename)
-
-    def get_raw_data(self, start_addr, end_addr):
+    def get_raw_range(self, start_addr, end_addr):
         hex_bytes = self.hex[start_addr:end_addr + 1]
         return self.bytes_to_string(hex_bytes)
 
-    def get_check_sum(self):
-        raw = self.get_raw_data(0x180, 0x181)
-        return raw[2:] + raw[:2]
+    # def get_raw_byte(self, addr):
+    #     return self.bytes_to_string(self.hex[addr])
 
-    def get_integer(self, start_addr, end_addr, string_mode):
-        if string_mode:
-            return self.get_raw_data(start_addr, end_addr)
-        else:
-            return int(self.get_raw_data(start_addr, end_addr))
+    def get_integer(self, start_addr, end_addr):
+        return int(self.get_raw_range(start_addr, end_addr))
 
-    def get_float(self, start_addr, end_addr, string_mode):
-        raw = self.get_raw_data(start_addr, end_addr)
+    def get_float(self, start_addr, end_addr):
+        raw = self.get_raw_range(start_addr, end_addr)
         integer = raw[:-2]
         decimal = raw[-2:]
-        if string_mode:
-            return integer + "." + decimal
-        else:
-            return float(integer + "." + decimal)
+        return float(integer + "." + decimal)
 
-    def get_number(self, record_type, start_addr, end_addr, string_mode=False):
+    def get_number(self, record_type, start_addr, end_addr):
         if type(record_type) is not RecordType:
             record_type = RecordType(record_type)
         if record_type is RecordType.INTEGER:
-            return self.get_integer(start_addr, end_addr, string_mode)
+            return self.get_integer(start_addr, end_addr)
         elif record_type is RecordType.FLOAT:
-            return self.get_float(start_addr, end_addr, string_mode)
+            return self.get_float(start_addr, end_addr)
         else:
             logging.warning(f"Unknown record type: {record_type}")
             return None
 
     def get_mapped_hex_data(self, row, column):
-        record_type, start_addr, end_addr = HEX_DATA_MAPPING[row][column]
-        record_type = RecordType(record_type)
-        if record_type is RecordType.DIFFERENCE:
-            a = self.get_number(*start_addr, False)
-            b = self.get_number(*end_addr, False)
+        r_type, start, end = HEX_DATA_MAPPING[row][column]
+        r_type = RecordType(r_type)
+        if r_type is RecordType.DIFFERENCE:
+            a = self.get_number(*start)
+            b = self.get_number(*end)
             return_value = round(a - b, 2)
         else:
-            return_value = self.get_number(record_type, start_addr, end_addr, False)
+            return_value = self.get_number(r_type, start, end)
         logging.debug(f"[{row}:{column}] = {return_value}")
         return return_value
 
+    def get_check_sum(self):
+        raw = self.get_raw_range(0x180, 0x181)
+        return raw[2:] + raw[:2]
 
 # h = HexBinding()
 # h.load_from_file("../dump.hex")

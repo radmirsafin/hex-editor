@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QSize, Qt
 from model.Table import Table
+from model.HexBinding import HexBinding
 import sys
 import logging
 
@@ -10,7 +11,6 @@ logging.basicConfig(level=logging.DEBUG)
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.check_sum_edit = None
         self.table = Table()
         self.init_ui()
 
@@ -28,8 +28,8 @@ class MainWindow(QWidget):
         sum_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
         grid_layout.addWidget(sum_label, 4, 1)
 
-        self.check_sum_edit = QLineEdit()
-        self.check_sum_edit.setFixedWidth(150)
+        check_sum_edit = QLineEdit()
+        check_sum_edit.setFixedWidth(150)
         grid_layout.addWidget(self.check_sum_edit, 4, 2)
 
         calc_button = QPushButton("Рассчитать")
@@ -52,9 +52,11 @@ class MainWindow(QWidget):
         logging.info("open_button clicked")
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        filename, _ = QFileDialog.getOpenFileName(
-            self, "Открыть файл", "", "Hex dump (*.hex);;All Files (*)", options=options)
+        filename, _ = QFileDialog.getOpenFileName(self, "Открыть файл", "",
+                                                  "Hex dump (*.hex);;All Files (*)", options=options)
+
         if filename:
+            hex_binding = HexBinding(filename)
             self.table.load_from_file(filename)
             self.check_sum_edit.setText(self.table.hex_binding.get_check_sum())
 
@@ -62,8 +64,8 @@ class MainWindow(QWidget):
         logging.info("save_button clicked")
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        filename, _ = QFileDialog.getSaveFileName(
-            self, "Сохранить файл", "", "Hex dump (*.hex);;All Files (*)", options=options)
+        filename, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "",
+                                                  "Hex dump (*.hex);;All Files (*)", options=options)
         if filename:
             self.table.save_to_file(filename)
 
