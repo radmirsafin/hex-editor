@@ -4,14 +4,6 @@ import logging
 
 
 class Table(QTableWidget):
-
-    COLUMNS_COUNT = 5
-    ROWS_COUNT = 16
-    HEADERS = [
-        "Рукав", "Счётчик", "Сумма",
-        "Количество заправок", "Количество плохих импульсов"
-    ]
-
     def __init__(self):
         QTableWidget.__init__(self)
 

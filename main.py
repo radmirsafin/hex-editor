@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QSize, Qt
 from model.Table import Table
-from model.HexBinding import HexBinding
+from model.HexParser import HexBinding
 import sys
 import logging
 
