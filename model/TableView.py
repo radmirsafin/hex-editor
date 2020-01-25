@@ -28,11 +28,10 @@ class TableView(QTableWidget):
         for h in hoses:
             self.insertRow(row_position)
             for column_position, column_name in enumerate(self.headers):
-                self.set_cell_value(row_position, column_position, h.get_field_by_name(column_name))
+                self.set_cell_value(row_position, column_position, h.get_field_by_header(column_name))
             row_position += 1
 
     def clean_table(self):
-        self.clear()
         self.setRowCount(0)
 
     def set_cell_value(self, row, column, value):

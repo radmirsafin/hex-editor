@@ -2,6 +2,7 @@ from model.RecordType import RecordType
 from model.Hose import Hose
 from model.Hex import Hex
 
+
 HEX_DATA_MAPPING = [
     ["A1", (RecordType.FLOAT, 0x00, 0x05), (RecordType.FLOAT, 0x06, 0x0B), (RecordType.INTEGER, 0x0C, 0x0F), (RecordType.FLOAT, 0x100, 0x105)],
     ["A2", (RecordType.FLOAT, 0x10, 0x15), (RecordType.FLOAT, 0x16, 0x1B), (RecordType.INTEGER, 0x1C, 0x1F), (RecordType.FLOAT, 0x108, 0x10D)],
@@ -26,17 +27,20 @@ class HexAPI:
     def __init__(self, filename):
         self.hex = Hex(filename)
 
-    def get_data(self):
+    def load_data(self):
         hoses = []
         for rw in HEX_DATA_MAPPING:
             hoses.append(Hose(
                 name=rw[0],
-                good_impulse_count=self.hex.get_number(*rw[1]),
-                amount=self.hex.get_number(*rw[2]),
-                refill_count=self.hex.get_number(*rw[3]),
-                total_impulse_count=self.hex.get_number(*rw[4])
+                good_impulse_count=self.hex.load_number(*rw[1]),
+                amount=self.hex.load_number(*rw[2]),
+                refill_count=self.hex.load_number(*rw[3]),
+                total_impulse_count=self.hex.load_number(*rw[4])
             ))
         return hoses
+
+    def load_checksum(self):
+        return self.hex.load_checksum()
 
     def get_checksum(self):
         return self.hex.get_checksum()

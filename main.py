@@ -2,18 +2,12 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QSize, Qt
 from model.TableView import TableView
 from model.HexAPI import HexAPI
-from model.Hose import HOSE_FIELD_NAMES
+from model.Hose import HOSE_FIELD_HEADERS
 
 import sys
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
-
-
-TABLE_VIEW_HEADERS = [
-    "Рукав", "Счётчик", "Сумма",
-    "Количество заправок", "Количество плохих импульсов"
-]
 
 
 class MainWindow(QWidget):
@@ -28,7 +22,7 @@ class MainWindow(QWidget):
         self.grid_layout = QGridLayout()
         self.setLayout(self.grid_layout)
 
-        self.table_view = TableView(HOSE_FIELD_NAMES)
+        self.table_view = TableView(HOSE_FIELD_HEADERS)
         self.grid_layout.addWidget(self.table_view, 0, 0, 3, 4)
 
         self.checksum_label = QLabel("Контрольная сумма")
@@ -66,8 +60,8 @@ class MainWindow(QWidget):
 
         if filename:
             self.hex_api = HexAPI(filename)
-            self.table_view.display_data(self.hex_api.get_data())
-            self.checksum_line.setText(self.hex_api.get_checksum())
+            self.table_view.display_data(self.hex_api.load_data())
+            self.checksum_line.setText(self.hex_api.load_checksum())
 
     def save_button_clicked(self):
         logging.info("save_button clicked")
@@ -80,6 +74,7 @@ class MainWindow(QWidget):
 
     def calculate_button_clicked(self):
         logging.info("calc_button clicked")
+        self.checksum_line.setText(self.hex_api.get_checksum())
 
 
 if __name__ == "__main__":

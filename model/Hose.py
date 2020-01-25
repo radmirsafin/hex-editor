@@ -1,6 +1,6 @@
 import logging
 
-HOSE_FIELD_NAMES = [
+HOSE_FIELD_HEADERS = [
     "Рукав",
     "Счётчик",
     "Сумма",
@@ -18,21 +18,16 @@ class Hose:
         self.total_impulse_count = total_impulse_count
         self.bad_impulse_amount = round(self.total_impulse_count - self.good_impulse_count, 2)
 
-        self.options = [
-            self.name,
-
-        ]
-
-    def get_field_by_name(self, name):
-        if name == HOSE_FIELD_NAMES[0]:
+    def get_field_by_header(self, header):
+        if header == HOSE_FIELD_HEADERS[0]:
             return self.name
-        elif name == HOSE_FIELD_NAMES[1]:
+        elif header == HOSE_FIELD_HEADERS[1]:
             return self.good_impulse_count
-        elif name == HOSE_FIELD_NAMES[2]:
+        elif header == HOSE_FIELD_HEADERS[2]:
             return self.amount
-        elif name == HOSE_FIELD_NAMES[3]:
+        elif header == HOSE_FIELD_HEADERS[3]:
             return self.refill_count
-        elif name == HOSE_FIELD_NAMES[4]:
+        elif header == HOSE_FIELD_HEADERS[4]:
             return self.bad_impulse_amount
         else:
-            logging.error(f"Unknown hose variable name: {name}")
+            logging.error(f"Unknown hose variable name: {header}")
