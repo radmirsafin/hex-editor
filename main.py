@@ -1,12 +1,11 @@
+import sys
+import logging
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QSize, Qt
 from model.TableView import TableView
-from model.HexAPI import HexAPI
-from model.Hose import HOSE_FIELD_HEADERS
+from model.HexDataMapper import HexDataMapper
 from model.Exceptions import *
 
-import sys
-import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -17,14 +16,13 @@ def show_exception_message(exc):
     msg.setWindowTitle("Ошибка!")
     msg.setStandardButtons(QMessageBox.Ok)
 
-    if type(exc) is InvalidTableDataException:
-        msg.setText("Ошибка чтения данных из таблицы.")
-        msg.setInformativeText(f"Невозможно распознать данные в строке {exc.row + 1}")
-        msg.setDetailedText(exc.message)
-
-    if type(exc) is SetHexDataException:
-        msg.setText("Ошибка при обработке данных")
-        msg.setDetailedText(exc.message)
+    if isinstance(exc, HexEditorException):
+        msg.setText(exc.text)
+        msg.setInformativeText(exc.informative_text)
+        msg.setDetailedText(exc.detailed_text)
+    else:
+        msg.setText("Ошибка исполнения")
+        msg.setDetailedText(str(exc))
 
     msg.exec_()
 
@@ -33,7 +31,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.hex_api = None
+        self.hex_mapper = None
 
         self.setWindowTitle("HEXeditor")
         self.setMinimumSize(QSize(800, 600))
@@ -41,7 +39,7 @@ class MainWindow(QWidget):
         self.grid_layout = QGridLayout()
         self.setLayout(self.grid_layout)
 
-        self.table_view = TableView(HOSE_FIELD_HEADERS)
+        self.table_view = TableView()
         self.grid_layout.addWidget(self.table_view, 0, 0, 3, 4)
 
         self.checksum_label = QLabel("Контрольная сумма")
@@ -71,9 +69,9 @@ class MainWindow(QWidget):
         self.show()
 
         # TODO remove this
-        self.hex_api = HexAPI("dumps/dump.hex")
-        self.table_view.display_data(self.hex_api.load_data())
-        self.checksum_line.setText(self.hex_api.load_checksum())
+        self.hex_mapper = HexDataMapper("dumps/dump.hex")
+        self.table_view.display_table_items(self.hex_mapper.load_table_items())
+        self.checksum_line.setText(self.hex_mapper.load_checksum())
 
     def open_button_clicked(self):
         options = QFileDialog.Options()
@@ -82,9 +80,9 @@ class MainWindow(QWidget):
                                                   "Hex dump (*.hex);;All Files (*)", options=options)
 
         if filename:
-            self.hex_api = HexAPI(filename)
-            self.table_view.display_data(self.hex_api.load_data())
-            self.checksum_line.setText(self.hex_api.load_checksum())
+            self.hex_mapper = HexDataMapper(filename)
+            self.table_view.display_table_items(self.hex_mapper.load_table_items())
+            self.checksum_line.setText(self.hex_mapper.load_checksum())
         else:
             logging.info("Source file not selected")
 
@@ -95,22 +93,22 @@ class MainWindow(QWidget):
                                                   "Hex dump (*.hex);;All Files (*)", options=options)
         if filename:
             try:
-                data = self.table_view.get_data()
-                self.hex_api.update_data(data)
+                table_items = self.table_view.get_table_items()
+                self.hex_mapper.update_hex_data(table_items)
             except Exception as exc:
                 show_exception_message(exc)
             else:
-                self.hex_api.write_dump_to_file(filename)
+                self.hex_mapper.write_dump_to_file(filename)
 
     def calculate_button_clicked(self):
-        if self.hex_api is not None:
+        if self.hex_mapper is not None:
             try:
-                data = self.table_view.get_data()
-                self.hex_api.update_data(data)
+                table_items = self.table_view.get_table_items()
+                self.hex_mapper.update_hex_data(table_items)
             except Exception as exc:
                 show_exception_message(exc)
             else:
-                self.checksum_line.setText(self.hex_api.get_checksum())
+                self.checksum_line.setText(self.hex_mapper.get_checksum())
         else:
             logging.warning("Cannot found any loaded *.hex files")
 

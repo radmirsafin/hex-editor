@@ -1,9 +1,7 @@
 import logging
 import pathlib
-
 from intelhex import IntelHex
-from model.RecordType import RecordType
-from model.Exceptions import SetHexDataException
+from model.Exceptions import *
 from ctypes import CDLL, c_ubyte, c_ulong
 
 
@@ -14,8 +12,12 @@ def grouper(iterable, n):
 
 class HexFile:
     def __init__(self, filename):
-        self.hex = IntelHex(filename)
-        self.checksum = self.load_checksum()
+        try:
+            self.hex = IntelHex(filename)
+        except Exception as exc:
+            exc = InvalidHexFile(f"Ошибка при загрузке файла {filename}", detailed_text=str(exc))
+            logging.error(exc)
+            raise exc
 
         self.crc_library_so = pathlib.Path(__file__).parent.absolute() / 'crc_library.so'
         if not self.crc_library_so.exists():
@@ -23,12 +25,16 @@ class HexFile:
         self.crc_library = CDLL(self.crc_library_so)
 
     def load_number(self, record_type, start_addr, end_addr):
-        if record_type is RecordType.INTEGER:
+        if record_type is int:
             return self.load_integer(start_addr, end_addr)
-        elif record_type is RecordType.FLOAT:
+        elif record_type is float:
             return self.load_float(start_addr, end_addr)
         else:
-            logging.error(f"Unknown record type: {record_type}")
+            exc = UnsupportedRecordTypeException(
+                f"Невозможно загрузить данные",
+                informative_text=f"Использован неизвестный тип записи: {record_type}")
+            logging.error(exc)
+            raise exc
 
     def load_integer(self, start_addr, end_addr):
         num = int(self._load_range(start_addr, end_addr))
@@ -49,30 +55,53 @@ class HexFile:
         return "".join(data).upper()
 
     def set_number(self, record_type, start_addr, end_addr, value_to_set):
-        if record_type is RecordType.INTEGER:
+        if record_type is int:
             return self.set_integer(start_addr, end_addr, value_to_set)
-        elif record_type is RecordType.FLOAT:
+        elif record_type is float:
             return self.set_float(start_addr, end_addr, value_to_set)
         else:
-            logging.error(f"Unknown record type: {record_type}")
+            exc = UnsupportedRecordTypeException(
+                "Невозможно выгрузить данные",
+                informative_text=f"Использован неизвестный тип записи: {record_type}")
+            logging.error(exc)
+            raise exc
 
     def set_integer(self, start_addr, end_addr, value_to_set):
         string_value = str(value_to_set).rjust(8, '0')
+        if len(string_value) > 8:
+            exc = OutOfMemoryException(
+                "Выход за пределы памяти",
+                informative_text=f"Для типа int() выделено 4 байта памяти. Неудачная попытка записи '{value_to_set}' "
+                                 f"по адресам {hex(start_addr)}-{hex(end_addr)}")
+            logging.error(exc)
+            raise exc
+
         logging.debug(f"Set integer value: {string_value} to {hex(start_addr)}-{hex(end_addr)}")
-        self._set_range(start_addr, end_addr, string_value)
+        self._set_range(start_addr, string_value)
 
     def set_float(self, start_addr, end_addr, value_to_set):
         integer = int(value_to_set)
         decimal = round(value_to_set - integer, 2)
         string_value = str(integer).rjust(10, '0') + str(decimal)[2:].ljust(2, '0')
-        logging.debug(f"Set float value: {string_value} to {hex(start_addr)}-{hex(end_addr)}")
-        self._set_range(start_addr, end_addr, string_value)
+        if len(string_value) > 12:
+            exc = OutOfMemoryException(
+                "Выход за пределы памяти",
+                informative_text=f"Для типа float() выделено 6 байт памяти. Неудачная попытка записи '{value_to_set}' "
+                                 f"по адресам {hex(start_addr)}-{hex(end_addr)}")
+            logging.error(exc)
+            raise exc
 
-    def _set_range(self, start_addr, end_addr, value_to_set):
+        logging.debug(f"Set float value: {string_value} to {hex(start_addr)}-{hex(end_addr)}")
+        self._set_range(start_addr, string_value)
+
+    def _set_range(self, start_addr, value_to_set):
         if len(value_to_set) % 2 != 0:
-            raise SetHexDataException(f"Range length should be multiple of 2. Current size: {len(value_to_set)}")
-        if end_addr - start_addr + 1 != len(value_to_set) / 2:
-            raise SetHexDataException(f"Cannot write hex data. Invalid address range: {hex(start_addr)}-{hex(end_addr)}")
+            exc = OddDataBlockException(
+                f"Ошибка записи",
+                informative_text=f"Размер блока данных для записи должен быть кратен 2. "
+                                 f"Попытка записи блока размера: {len(value_to_set)}")
+            logging.error(exc)
+            raise exc
 
         curr_addr = start_addr
         for frame in ["".join(i) for i in grouper(value_to_set, 2)]:
