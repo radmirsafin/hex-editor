@@ -10,13 +10,20 @@ HOSE_FIELD_HEADERS = [
 
 
 class Hose:
-    def __init__(self, name, good_impulse_count, amount, refill_count, total_impulse_count):
+    def __init__(self, name, good_impulse_count, amount, refill_count,
+                 total_impulse_count=None, bad_impulse_count=None):
+
         self.name = name
         self.good_impulse_count = good_impulse_count
         self.amount = amount
         self.refill_count = refill_count
         self.total_impulse_count = total_impulse_count
-        self.bad_impulse_amount = round(self.total_impulse_count - self.good_impulse_count, 2)
+
+        if bad_impulse_count is None:
+            self.bad_impulse_count = round(self.total_impulse_count - self.good_impulse_count, 2)
+        else:
+            self.bad_impulse_count = bad_impulse_count
+            self.total_impulse_count = round(self.bad_impulse_count + self.good_impulse_count, 2)
 
     def get_field_by_header(self, header):
         if header == HOSE_FIELD_HEADERS[0]:
@@ -28,6 +35,23 @@ class Hose:
         elif header == HOSE_FIELD_HEADERS[3]:
             return self.refill_count
         elif header == HOSE_FIELD_HEADERS[4]:
-            return self.bad_impulse_amount
+            return self.bad_impulse_count
         else:
             logging.error(f"Unknown hose variable name: {header}")
+
+    def __repr__(self):
+        return """
+            Рукав: {}
+            Счётчик: {}
+            Сумма: {}
+            Количество заправок: {}
+            Количество плохих испульсов: {}
+            Общee количество импульсов: {}
+        """.format(
+            self.name,
+            self.good_impulse_count,
+            self.amount,
+            self.refill_count,
+            self.bad_impulse_count,
+            self.total_impulse_count
+        )

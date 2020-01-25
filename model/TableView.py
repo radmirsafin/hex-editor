@@ -1,5 +1,9 @@
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView
 from PyQt5.QtCore import Qt
+from model.Hose import Hose
+from model.Exceptions import InvalidTableDataException
+
+import logging
 
 
 class TableView(QTableWidget):
@@ -37,4 +41,25 @@ class TableView(QTableWidget):
     def set_cell_value(self, row, column, value):
         w = QTableWidgetItem(str(value))
         w.setTextAlignment(Qt.AlignRight)
+        if column == 0:
+            w.setFlags(Qt.ItemIsEditable)
         self.setItem(row, column, w)
+
+    def get_data(self):
+        hoses = []
+        for row_i in range(0, self.rowCount()):
+            try:
+                hose = Hose(
+                      name=self.item(row_i, 0).text(),
+                      good_impulse_count=float(self.item(row_i, 1).text()),
+                      amount=float(self.item(row_i, 2).text()),
+                      refill_count=int(self.item(row_i, 3).text()),
+                      bad_impulse_count=float(self.item(row_i, 4).text()),
+                )
+            except ValueError as exc:
+                raise InvalidTableDataException(str(exc), row_i)
+
+            logging.debug(f"Item loaded from table: {hose}")
+            hoses.append(hose)
+        return hoses
+

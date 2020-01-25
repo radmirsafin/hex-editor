@@ -3,11 +3,30 @@ from PyQt5.QtCore import QSize, Qt
 from model.TableView import TableView
 from model.HexAPI import HexAPI
 from model.Hose import HOSE_FIELD_HEADERS
+from model.Exceptions import *
 
 import sys
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
+
+
+def show_exception_message(exc):
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Critical)
+    msg.setWindowTitle("Ошибка!")
+    msg.setStandardButtons(QMessageBox.Ok)
+
+    if type(exc) is InvalidTableDataException:
+        msg.setText("Ошибка чтения данных из таблицы.")
+        msg.setInformativeText(f"Невозможно распознать данные в строке {exc.row + 1}")
+        msg.setDetailedText(exc.message)
+
+    if type(exc) is SetHexDataException:
+        msg.setText("Ошибка при обработке данных")
+        msg.setDetailedText(exc.message)
+
+    msg.exec_()
 
 
 class MainWindow(QWidget):
@@ -51,8 +70,12 @@ class MainWindow(QWidget):
 
         self.show()
 
+        # TODO remove this
+        self.hex_api = HexAPI("dumps/dump.hex")
+        self.table_view.display_data(self.hex_api.load_data())
+        self.checksum_line.setText(self.hex_api.load_checksum())
+
     def open_button_clicked(self):
-        logging.info("open_button clicked")
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         filename, _ = QFileDialog.getOpenFileName(self, "Открыть файл", "",
@@ -62,22 +85,38 @@ class MainWindow(QWidget):
             self.hex_api = HexAPI(filename)
             self.table_view.display_data(self.hex_api.load_data())
             self.checksum_line.setText(self.hex_api.load_checksum())
+        else:
+            logging.info("Source file not selected")
 
     def save_button_clicked(self):
-        logging.info("save_button clicked")
-        # options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog
-        # filename, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "",
-        #                                           "Hex dump (*.hex);;All Files (*)", options=options)
-        # if filename:
-        #     self.table.save_to_file(filename)
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        filename, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "",
+                                                  "Hex dump (*.hex);;All Files (*)", options=options)
+        if filename:
+            try:
+                data = self.table_view.get_data()
+                self.hex_api.update_data(data)
+            except Exception as exc:
+                show_exception_message(exc)
+            else:
+                self.hex_api.write_dump_to_file(filename)
 
     def calculate_button_clicked(self):
-        logging.info("calc_button clicked")
-        self.checksum_line.setText(self.hex_api.get_checksum())
+        if self.hex_api is not None:
+            try:
+                data = self.table_view.get_data()
+                self.hex_api.update_data(data)
+            except Exception as exc:
+                show_exception_message(exc)
+            else:
+                self.checksum_line.setText(self.hex_api.get_checksum())
+        else:
+            logging.warning("Cannot found any loaded *.hex files")
 
 
 if __name__ == "__main__":
+    logging.info("Application started")
     app = QApplication(sys.argv)
     mw = MainWindow()
     sys.exit(app.exec())
