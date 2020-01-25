@@ -1,50 +1,59 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QSize, Qt
-from model.Table import Table
-from model.HexParser import HexBinding
+from model.TableView import TableView
+from model.HexAPI import HexAPI
+from model.Hose import HOSE_FIELD_NAMES
+
 import sys
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
 
+TABLE_VIEW_HEADERS = [
+    "Рукав", "Счётчик", "Сумма",
+    "Количество заправок", "Количество плохих импульсов"
+]
+
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.table = Table()
-        self.init_ui()
 
-    def init_ui(self):
+        self.hex_api = None
+
         self.setWindowTitle("HEXeditor")
         self.setMinimumSize(QSize(800, 600))
 
-        grid_layout = QGridLayout()
-        self.setLayout(grid_layout)
+        self.grid_layout = QGridLayout()
+        self.setLayout(self.grid_layout)
 
-        grid_layout.addWidget(self.table, 0, 0, 3, 4)
+        self.table_view = TableView(HOSE_FIELD_NAMES)
+        self.grid_layout.addWidget(self.table_view, 0, 0, 3, 4)
 
-        sum_label = QLabel("Контрольная сумма")
-        sum_label.setFixedHeight(35)
-        sum_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
-        grid_layout.addWidget(sum_label, 4, 1)
+        self.checksum_label = QLabel("Контрольная сумма")
+        self.checksum_label.setFixedHeight(35)
+        self.checksum_label.setAlignment(Qt.AlignRight | Qt.AlignCenter)
+        self.grid_layout.addWidget(self.checksum_label, 4, 1)
 
-        check_sum_edit = QLineEdit()
-        check_sum_edit.setFixedWidth(150)
-        grid_layout.addWidget(self.check_sum_edit, 4, 2)
+        self.checksum_line = QLineEdit()
+        self.checksum_line.setFixedWidth(150)
+        self.grid_layout.addWidget(self.checksum_line, 4, 2)
 
-        calc_button = QPushButton("Рассчитать")
-        calc_button.setFixedWidth(150)
-        grid_layout.addWidget(calc_button, 4, 3)
+        self.calc_button = QPushButton("Рассчитать")
+        self.calc_button.clicked.connect(self.calculate_button_clicked)
+        self.calc_button.setFixedWidth(150)
+        self.grid_layout.addWidget(self.calc_button, 4, 3)
 
-        open_button = QPushButton("Открыть")
-        open_button.clicked.connect(self.open_button_clicked)
-        open_button.setFixedWidth(150)
-        grid_layout.addWidget(open_button, 5, 2)
+        self.open_button = QPushButton("Открыть")
+        self.open_button.clicked.connect(self.open_button_clicked)
+        self.open_button.setFixedWidth(150)
+        self.grid_layout.addWidget(self.open_button, 5, 2)
 
-        save_button = QPushButton("Сохранить")
-        save_button.clicked.connect(self.save_button_clicked)
-        save_button.setFixedWidth(150)
-        grid_layout.addWidget(save_button, 5, 3)
+        self.save_button = QPushButton("Сохранить")
+        self.save_button.clicked.connect(self.save_button_clicked)
+        self.save_button.setFixedWidth(150)
+        self.grid_layout.addWidget(self.save_button, 5, 3)
 
         self.show()
 
@@ -56,18 +65,21 @@ class MainWindow(QWidget):
                                                   "Hex dump (*.hex);;All Files (*)", options=options)
 
         if filename:
-            hex_binding = HexBinding(filename)
-            self.table.load_from_file(filename)
-            self.check_sum_edit.setText(self.table.hex_binding.get_check_sum())
+            self.hex_api = HexAPI(filename)
+            self.table_view.display_data(self.hex_api.get_data())
+            self.checksum_line.setText(self.hex_api.get_checksum())
 
     def save_button_clicked(self):
         logging.info("save_button clicked")
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        filename, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "",
-                                                  "Hex dump (*.hex);;All Files (*)", options=options)
-        if filename:
-            self.table.save_to_file(filename)
+        # options = QFileDialog.Options()
+        # options |= QFileDialog.DontUseNativeDialog
+        # filename, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "",
+        #                                           "Hex dump (*.hex);;All Files (*)", options=options)
+        # if filename:
+        #     self.table.save_to_file(filename)
+
+    def calculate_button_clicked(self):
+        logging.info("calc_button clicked")
 
 
 if __name__ == "__main__":
