@@ -22,10 +22,8 @@ class HexFile:
             logging.error(exc)
             raise exc
 
-        # self.crc_library_so = pathlib.PureWindowsPath('C:\Users\Radmir\Desktop\HEXeditor\model\crc_library.so')
-        # if not self.crc_library_so.exists():
-        #     raise FileNotFoundError(f"{self.crc_library_so} file not found!")
-        self.crc_library = CDLL('C:\\Users\\Radmir\\Desktop\\HEXeditor\\model\\crc_library.dll')
+        self.crc_library_so = pathlib.Path(pathlib.Path(__file__).parent.absolute(), 'crc_library.dll')
+        self.crc_library = CDLL(str(self.crc_library_so))
 
         self.checksum = self.get_checksum()
         original = self.load_checksum()
