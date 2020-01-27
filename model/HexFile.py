@@ -135,7 +135,7 @@ class HexFile:
 
         for addr, value in self.hex[0x0000:0x0181 + 1].todict().items():
             new_addr = 0x2D6 + addr
-            logging.info(f"Duplicate data from {hex(addr)} to {hex(new_addr)}")
+            logging.debug(f"Duplicate data from {hex(addr)} to {hex(new_addr)}")
             self.hex[new_addr] = value
 
         self.hex.write_hex_file(filename)
