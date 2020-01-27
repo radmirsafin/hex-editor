@@ -7,7 +7,11 @@ from model.HexDataMapper import HexDataMapper
 from model.Exceptions import *
 
 
-logging.basicConfig(level=logging.DEBUG, filename="hex_editor.log")
+logging.basicConfig(
+    level=logging.DEBUG,
+    filename="hex_editor.log",
+    format='%(asctime)-15s %(message)s'
+)
 
 
 def with_exception_message(f):
