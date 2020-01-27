@@ -4,7 +4,6 @@ from PyQt5.QtCore import Qt
 from model.TableViewItem import TableViewItem
 from model.Exceptions import *
 
-
 HEADERS = [
     "Рукав",
     "Счётчик",
@@ -55,22 +54,16 @@ class TableView(QTableWidget):
         for row_i in range(0, self.rowCount()):
             try:
                 table_item = TableViewItem(
-                      name=self.item(row_i, 0).text(),
-                      counter=float(self.item(row_i, 1).text()),
-                      amount=float(self.item(row_i, 2).text()),
-                      refill_count=int(self.item(row_i, 3).text()),
-                      bad_count=float(self.item(row_i, 4).text()),
+                    name=self.item(row_i, 0).text(),
+                    counter=self.item(row_i, 1).text(),
+                    amount=self.item(row_i, 2).text(),
+                    refill_count=self.item(row_i, 3).text(),
+                    bad_count=self.item(row_i, 4).text(),
                 )
             except ValueError as exc:
-                exc = InvalidTableItemValueException(
-                    "Ошибка при чтении данных из таблицы",
-                    informative_text=f"Невозможно преобразовать символы из строки {row_i}",
-                    detailed_text=str(exc),
-                )
+                exc = InvalidTableItemValueException(row_number=row_i, detailed_text=str(exc))
                 logging.error(exc)
                 raise exc
-
             logging.debug(f"Item loaded from table: {table_item}")
             table_view_items.append(table_item)
         return table_view_items
-

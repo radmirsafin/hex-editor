@@ -27,7 +27,7 @@ class HexDataMapper:
     def __init__(self, filename):
         self.hex = HexFile(filename)
 
-    def load_table_items(self):
+    def get_data(self):
         table_items = []
         for name, values in HEX_OBJECTS_MAP.items():
             it = TableViewItem(
@@ -41,15 +41,12 @@ class HexDataMapper:
             table_items.append(it)
         return table_items
 
-    def update_hex_data(self, table_items):
+    def set_data(self, table_items):
         for item in table_items:
             self.hex.set_number(*HEX_OBJECTS_MAP[item.name][0], item.counter)
             self.hex.set_number(*HEX_OBJECTS_MAP[item.name][1], item.amount)
             self.hex.set_number(*HEX_OBJECTS_MAP[item.name][2], item.refill_count)
             self.hex.set_number(*HEX_OBJECTS_MAP[item.name][3], item.total_count)
-
-    def load_checksum(self):
-        return self.hex.load_checksum()
 
     def get_checksum(self):
         return self.hex.get_checksum()

@@ -7,24 +7,30 @@ from model.HexDataMapper import HexDataMapper
 from model.Exceptions import *
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, filename="hex_editor.log")
 
 
-def show_exception_message(exc):
-    msg = QMessageBox()
-    msg.setIcon(QMessageBox.Critical)
-    msg.setWindowTitle("Ошибка!")
-    msg.setStandardButtons(QMessageBox.Ok)
+def with_exception_message(f):
+    def with_message(*args):
+        try:
+            f(args[0])
+        except Exception as exc:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setWindowTitle("Ошибка!")
+            msg.setStandardButtons(QMessageBox.Ok)
 
-    if isinstance(exc, HexEditorException):
-        msg.setText(exc.text)
-        msg.setInformativeText(exc.informative_text)
-        msg.setDetailedText(exc.detailed_text)
-    else:
-        msg.setText("Ошибка исполнения")
-        msg.setDetailedText(str(exc))
+            if isinstance(exc, HexEditorException):
+                msg.setText(exc.text)
+                msg.setInformativeText(exc.informative_text)
+                msg.setDetailedText(exc.detailed_text)
+            else:
+                msg.setText("Необработанное исключение")
+                msg.setDetailedText(str(exc))
 
-    msg.exec_()
+            msg.exec_()
+
+    return with_message
 
 
 class MainWindow(QWidget):
@@ -68,47 +74,39 @@ class MainWindow(QWidget):
 
         self.show()
 
-        # TODO remove this
-        self.hex_mapper = HexDataMapper("dumps/dump.hex")
-        self.table_view.display_table_items(self.hex_mapper.load_table_items())
-        self.checksum_line.setText(self.hex_mapper.load_checksum())
-
+    @with_exception_message
     def open_button_clicked(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        filename, _ = QFileDialog.getOpenFileName(self, "Открыть файл", "",
-                                                  "Hex dump (*.hex);;All Files (*)", options=options)
+        filename, _ = QFileDialog.getOpenFileName(
+            self, "Открыть файл", "", "Hex dump (*.hex);;All Files (*)", options=options)
 
         if filename:
+            logging.info(f"Open file: {filename}")
             self.hex_mapper = HexDataMapper(filename)
-            self.table_view.display_table_items(self.hex_mapper.load_table_items())
-            self.checksum_line.setText(self.hex_mapper.load_checksum())
+            table_items = self.hex_mapper.get_data()
+            self.table_view.display_table_items(table_items)
+            self.checksum_line.setText(self.hex_mapper.get_checksum())
         else:
-            logging.info("Source file not selected")
+            logging.info("Hex file not selected")
 
+    @with_exception_message
     def save_button_clicked(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         filename, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "",
                                                   "Hex dump (*.hex);;All Files (*)", options=options)
         if filename:
-            try:
-                table_items = self.table_view.get_table_items()
-                self.hex_mapper.update_hex_data(table_items)
-            except Exception as exc:
-                show_exception_message(exc)
-            else:
-                self.hex_mapper.write_dump_to_file(filename)
+            table_items = self.table_view.get_table_items()
+            self.hex_mapper.set_data(table_items)
+            self.hex_mapper.write_dump_to_file(filename)
 
+    @with_exception_message
     def calculate_button_clicked(self):
         if self.hex_mapper is not None:
-            try:
-                table_items = self.table_view.get_table_items()
-                self.hex_mapper.update_hex_data(table_items)
-            except Exception as exc:
-                show_exception_message(exc)
-            else:
-                self.checksum_line.setText(self.hex_mapper.get_checksum())
+            table_items = self.table_view.get_table_items()
+            self.hex_mapper.set_data(table_items)
+            self.checksum_line.setText(self.hex_mapper.get_checksum())
         else:
             logging.warning("Cannot found any loaded *.hex files")
 
