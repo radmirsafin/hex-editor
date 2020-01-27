@@ -104,20 +104,22 @@ class MainWindow(QWidget):
         options |= QFileDialog.DontUseNativeDialog
         filename, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "",
                                                   "Hex dump (*.hex);;All Files (*)", options=options)
-        if filename:
+        if filename and self.hex_mapper:
             table_items = self.table_view.get_table_items()
             self.hex_mapper.set_data(table_items)
             self.hex_mapper.write_dump_to_file(filename)
             show_info_message("Файл сохранён")
+        else:
+            logging.info("Nothing to save")
 
     @with_exception_message
     def calculate_button_clicked(self):
-        if self.hex_mapper is not None:
+        if self.hex_mapper:
             table_items = self.table_view.get_table_items()
             self.hex_mapper.set_data(table_items)
             self.checksum_line.setText(self.hex_mapper.get_checksum())
         else:
-            logging.warning("Cannot found any loaded *.hex files")
+            logging.info("Cannot found any loaded *.hex files")
 
 
 if __name__ == "__main__":
