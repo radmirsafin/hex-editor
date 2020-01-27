@@ -68,3 +68,11 @@ class InvalidTableItemValueException(HexEditorException):
         self.text = "Ошибка при чтении данных из таблицы"
         self.row_number = kwargs.get("row_number", "None")
         self.informative_text = f"Невозможно преобразовать данные из строки: {self.row_number}"
+
+
+class LibraryNotFoundException(HexEditorException):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.text = "Отсутствует необходимый модуль"
+        self.library_file = kwargs.get("library_file", "None")
+        self.informative_text = f"Не найден файл {self.library_file}"

@@ -22,7 +22,12 @@ class HexFile:
             logging.error(exc)
             raise exc
 
-        self.crc_library_so = pathlib.Path(pathlib.Path(__file__).parent.absolute(), 'crc_library.dll')
+        self.crc_library_so = pathlib.Path(pathlib.Path().absolute(), 'crc_library.dll')
+        if not self.crc_library_so.exists():
+            exc = LibraryNotFoundException(library_file=self.crc_library_so)
+            logging.error(exc)
+            raise exc
+
         self.crc_library = CDLL(str(self.crc_library_so))
 
         self.checksum = self.get_checksum()
