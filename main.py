@@ -33,6 +33,14 @@ def with_exception_message(f):
     return with_message
 
 
+def show_info_message(message):
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Information)
+    msg.setStandardButtons(QMessageBox.Ok)
+    msg.setText(message)
+    msg.exec_()
+
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -100,6 +108,7 @@ class MainWindow(QWidget):
             table_items = self.table_view.get_table_items()
             self.hex_mapper.set_data(table_items)
             self.hex_mapper.write_dump_to_file(filename)
+            show_info_message("Файл сохранён")
 
     @with_exception_message
     def calculate_button_clicked(self):
